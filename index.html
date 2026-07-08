@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하루치 예약</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    background: #f9f7f4;
+    color: #1c1c1a;
+    padding: 40px 20px 60px;
+    min-height: 100vh;
+  }
+
+  .wrap { max-width: 440px; margin: 0 auto; }
+
+  .header { text-align: center; margin-bottom: 36px; }
+  .brand-label { font-size: 10px; letter-spacing: 0.2em; color: #b0a898; text-transform: uppercase; margin-bottom: 10px; }
+  .unit-name { font-family: 'Cormorant Garamond', serif; font-size: 44px; font-weight: 300; letter-spacing: 0.08em; color: #1c1c1a; }
+
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-nav button { background: none; border: none; cursor: pointer; color: #b0a898; font-size: 18px; padding: 6px 10px; border-radius: 6px; transition: color 0.15s, background 0.15s; }
+  .cal-nav button:hover { color: #1c1c1a; background: #ede9e3; }
+  .cal-nav .month { font-size: 14px; font-weight: 400; letter-spacing: 0.08em; color: #1c1c1a; }
+
+  .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
+  .wd { text-align: center; font-size: 10px; letter-spacing: 0.05em; color: #c8c0b4; padding: 4px 0; }
+
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+
+  .day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: background 0.1s; user-select: none; }
+  .day:hover:not(.empty):not(.unavail):not(.past) { background: #ede9e3; }
+  .day.empty, .day.past { cursor: default; }
+  .day.past { opacity: 0.3; }
+  .day.unavail { cursor: not-allowed; background: #f2efeb; }
+  .day.unavail .dn { color: #d4cfc8; }
+  .day.unavail .dp { color: #d4cfc8; }
+  .day.checkin { background: #2d2520 !important; border-radius: 8px 0 0 8px; }
+  .day.checkout { background: #2d2520 !important; border-radius: 0 8px 8px 0; }
+  .day.checkin .dn, .day.checkout .dn { color: #fff; }
+  .day.checkin .dp, .day.checkout .dp { color: rgba(255,255,255,0.55); }
+  .day.inrange { background: #ede9e3; border-radius: 0; }
+  .day.checkin.checkout { border-radius: 8px; }
+
+  .dn { font-size: 13px; font-weight: 400; line-height: 1; margin-bottom: 3px; }
+  .dp { font-size: 8px; line-height: 1; letter-spacing: -0.01em; }
+
+  .day[data-t="weekday"] .dn { color: #1c1c1a; }
+  .day[data-t="weekday"] .dp { color: #c8c0b4; }
+  .day[data-t="fri"] .dn, .day[data-t="sat"] .dn { color: #5a4535; font-weight: 500; }
+  .day[data-t="fri"] .dp, .day[data-t="sat"] .dp { color: #9c7e68; }
+  .day[data-t="sun"] .dn { color: #8a6f5e; }
+  .day[data-t="sun"] .dp { color: #b89484; }
+  .day[data-t="holiday"] .dn { color: #9a5530; font-weight: 500; }
+  .day[data-t="holiday"] .dp { color: #c47a52; }
+
+  .card { margin-top: 12px; padding: 18px 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e3dc; }
+  .card-title { font-size: 9px; letter-spacing: 0.15em; color: #b0a898; text-transform: uppercase; margin-bottom: 14px; }
+
+  .dates-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .date-pill { flex: 1; text-align: center; }
+  .date-pill .label { font-size: 9px; letter-spacing: 0.1em; color: #b0a898; margin-bottom: 3px; }
+  .date-pill .value { font-size: 14px; font-weight: 400; color: #1c1c1a; }
+  .date-arrow { color: #d4cfc8; font-size: 14px; }
+  .nights-row { display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; color: #8a8278; padding-top: 12px; border-top: 1px solid #f0ebe4; }
+  .total-price { font-size: 16px; font-weight: 500; color: #1c1c1a; }
+  .discount-note { font-size: 10px; color: #a09488; margin-top: 2px; text-align: right; }
+
+  .option-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f5f1ec; }
+  .option-row:last-child { border-bottom: none; }
+  .option-left { display: flex; flex-direction: column; gap: 2px; }
+  .option-name { font-size: 13px; color: #1c1c1a; }
+  .option-price { font-size: 11px; color: #b0a898; }
+
+  .stepper { display: flex; align-items: center; gap: 10px; }
+  .stepper button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e0dbd4; background: #fff; color: #1c1c1a; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; line-height: 1; }
+  .stepper button:hover { background: #f5f1ec; }
+  .stepper button:disabled { opacity: 0.3; cursor: default; }
+  .stepper .count { font-size: 14px; font-weight: 400; min-width: 16px; text-align: center; color: #1c1c1a; }
+
+  .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track { position: absolute; inset: 0; background: #e0dbd4; border-radius: 11px; transition: background 0.2s; }
+  .toggle input:checked + .toggle-track { background: #2d2520; }
+  .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: left 0.2s; }
+  .toggle input:checked ~ .toggle-thumb { left: 21px; }
+
+  .hint { font-size: 12px; color: #c8c0b4; text-align: center; padding: 8px 0; }
+
+  /* 메시지 미리보기 */
+  .msg-box {
+    margin-top: 12px;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e8e3dc;
+    display: none;
+  }
+  .msg-box.visible { display: block; }
+  .msg-box-title { font-size: 9px; letter-spacing: 0.15em; color: #b0a898; text-transform: uppercase; margin-bottom: 10px; }
+  .msg-box-desc { font-size: 11px; color: #a09488; margin-bottom: 10px; line-height: 1.6; }
+  .msg-text {
+    background: #f9f7f4;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #4a4540;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-bottom: 10px;
+  }
+  .copy-btn {
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: 1px solid #e0dbd4;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #6a6258;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.1s;
+  }
+  .copy-btn:hover { background: #f5f1ec; }
+  .copy-btn.copied { color: #7a9a6a; border-color: #b8d4a8; }
+
+  .cta { display: block; width: 100%; margin-top: 14px; padding: 15px; background: #2d2520; color: #fff; font-size: 13px; font-family: inherit; border: none; border-radius: 10px; cursor: pointer; text-align: center; text-decoration: none; letter-spacing: 0.03em; transition: opacity 0.15s; }
+  .cta:hover { opacity: 0.85; }
+  .cta.disabled { background: #e8e3dc; color: #b0a898; pointer-events: none; }
+
+  .reset-btn { display: none; background: none; border: none; font-size: 10px; color: #b0a898; cursor: pointer; text-decoration: underline; margin-top: 10px; font-family: inherit; width: 100%; text-align: center; }
+  .reset-btn:hover { color: #1c1c1a; }
+
+  .notice { margin-top: 16px; font-size: 10px; color: #c8c0b4; line-height: 1.8; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="brand-label">haruchi · 하루치</div>
+    <div class="unit-name" id="unitName">고요</div>
+  </div>
+
+  <div class="cal-nav">
+    <button onclick="changeMonth(-1)">‹</button>
+    <span class="month" id="monthTitle"></span>
+    <button onclick="changeMonth(1)">›</button>
+  </div>
+
+  <div class="weekdays">
+    <div class="wd">일</div><div class="wd">월</div><div class="wd">화</div>
+    <div class="wd">수</div><div class="wd">목</div><div class="wd">금</div><div class="wd">토</div>
+  </div>
+  <div class="days" id="days"></div>
+
+  <div class="card" id="dateCard">
+    <div class="card-title">예약 일정</div>
+    <div id="dateCardBody"><div class="hint">체크인 날짜를 선택해 주세요</div></div>
+  </div>
+
+  <div class="card" id="optionCard" style="display:none">
+    <div class="card-title">옵션 선택</div>
+    <div class="option-row">
+      <div class="option-left">
+        <span class="option-name">추가 인원</span>
+        <span class="option-price">2만원 · 인 · 박</span>
+      </div>
+      <div class="stepper">
+        <button onclick="changeGuest(-1)" id="guestMinus">−</button>
+        <span class="count" id="guestCount">0</span>
+        <button onclick="changeGuest(1)">+</button>
+      </div>
+    </div>
+    <div class="option-row">
+      <div class="option-left">
+        <span class="option-name">바베큐</span>
+        <span class="option-price">3만원</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="bbqToggle" onchange="updateSummary()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <div class="option-row">
+      <div class="option-left">
+        <span class="option-name">온수풀</span>
+        <span class="option-price">6만원</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="poolToggle" onchange="updateSummary()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+
+  <!-- 메시지 미리보기 -->
+  <div class="msg-box" id="msgBox">
+    <div class="msg-box-title">카카오 연락 내용</div>
+    <div class="msg-box-desc">아래 내용을 복사한 후, 카카오 채팅창에 붙여넣어 주세요.</div>
+    <div class="msg-text" id="msgText"></div>
+    <button class="copy-btn" id="copyBtn" onclick="copyMsg()">내용 복사하기</button>
+  </div>
+
+  <a class="cta disabled" id="ctaBtn" href="#">카카오로 연락하기</a>
+  <button class="reset-btn" id="resetBtn" onclick="resetSelection()">선택 초기화</button>
+
+  <div class="notice">
+    24개월 미만 유아는 인원에 포함되지 않아요.<br>
+    임산부 동반 시 추가 인원 요금이 면제됩니다 (증빙 필요).
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const unit = params.get('unit') || 'goyo';
+
+  // ── 수정 구역 시작 ──────────────────────────
+
+  const UNITS = {
+    goyo: { name: '고요', prices: { weekday:300000, fri:500000, sat:500000, sun:400000, holiday:550000 } },
+    ongi: { name: '온기', prices: { weekday:400000, fri:600000, sat:600000, sun:500000, holiday:650000 } }
+  };
+
+  const OPTIONS = {
+    bbq: 30000,   // 바베큐
+    pool: 60000,  // 온수풀
+    guest: 20000  // 추가 인원 (1인 1박)
+  };
+
+  const UNAVAILABLE = {
+    goyo: [],
+    ongi: []
+  };
+
+  const HOLIDAYS = [
+    '2025-09-05','2025-09-06','2025-09-07','2025-09-08',
+    '2026-01-27','2026-01-28','2026-01-29','2026-01-30',
+    '2026-09-24','2026-09-25','2026-09-26','2026-09-27',
+  ];
+
+  const KAKAO = 'http://pf.kakao.com/_XBnwX';
+
+  // ── 수정 구역 끝 ──────────────────────────
+
+  const cfg = UNITS[unit] || UNITS.goyo;
+  const unavail = UNAVAILABLE[unit] || [];
+  document.getElementById('unitName').textContent = cfg.name;
+
+  let curY, curM, checkin = null, checkout = null, extraGuest = 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  function toYMD(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function fromYMD(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+  function getDayType(d) {
+    const ymd = toYMD(d);
+    if (HOLIDAYS.includes(ymd)) return 'holiday';
+    const w = d.getDay();
+    if (w===5) return 'fri'; if (w===6) return 'sat'; if (w===0) return 'sun';
+    return 'weekday';
+  }
+  function fmt(n) { return (n/10000).toFixed(0)+'만'; }
+  function fmtDate(d) { return `${d.getMonth()+1}월 ${d.getDate()}일`; }
+  function calcNights(ci, co) {
+    let total=0, nights=0;
+    const cur = new Date(ci);
+    while (cur < co) { total += cfg.prices[getDayType(cur)]; nights++; cur.setDate(cur.getDate()+1); }
+    return { total, nights };
+  }
+
+  function changeGuest(dir) {
+    extraGuest = Math.max(0, extraGuest + dir);
+    document.getElementById('guestCount').textContent = extraGuest;
+    document.getElementById('guestMinus').disabled = extraGuest === 0;
+    updateSummary();
+  }
+
+  function changeMonth(dir) {
+    curM += dir;
+    if (curM>11){curM=0;curY++;} if (curM<0){curM=11;curY--;}
+    render();
+  }
+
+  function selectDay(ymd) {
+    const d = fromYMD(ymd);
+    if (d < today || unavail.includes(ymd)) return;
+    if (!checkin || (checkin && checkout)) {
+      checkin = ymd; checkout = null;
+    } else {
+      if (ymd <= checkin) { checkin = ymd; checkout = null; }
+      else {
+        const ci = fromYMD(checkin), co = fromYMD(ymd);
+        let blocked = false;
+        const cur = new Date(ci); cur.setDate(cur.getDate()+1);
+        while (cur < co) { if (unavail.includes(toYMD(cur))) { blocked=true; break; } cur.setDate(cur.getDate()+1); }
+        if (blocked) { checkin = ymd; checkout = null; }
+        else checkout = ymd;
+      }
+    }
+    render(); updateSummary();
+  }
+
+  function resetSelection() {
+    checkin=null; checkout=null; extraGuest=0;
+    document.getElementById('guestCount').textContent = '0';
+    document.getElementById('guestMinus').disabled = true;
+    document.getElementById('bbqToggle').checked = false;
+    document.getElementById('poolToggle').checked = false;
+    render(); updateSummary();
+  }
+
+  function copyMsg() {
+    const text = document.getElementById('msgText').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '복사됐어요 ✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '내용 복사하기'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function buildMsg(ci, co, nights, grandTotal, bbq, pool) {
+    let msg = `하루치 ${cfg.name} 예약 문의\n`;
+    msg += `──────────────\n`;
+    msg += `체크인  ${fmtDate(ci)}\n`;
+    msg += `체크아웃  ${fmtDate(co)} (${nights}박)\n`;
+    if (extraGuest > 0) msg += `추가 인원  ${extraGuest}명\n`;
+    if (bbq) msg += `바베큐  신청\n`;
+    if (pool) msg += `온수풀  신청\n`;
+    msg += `──────────────\n`;
+    msg += `예상 금액  ${(grandTotal/10000).toFixed(0)}만원`;
+    if (nights >= 2) msg += ` (연박 할인 적용)`;
+    return msg;
+  }
+
+  function updateSummary() {
+    const dateCardBody = document.getElementById('dateCardBody');
+    const optionCard = document.getElementById('optionCard');
+    const msgBox = document.getElementById('msgBox');
+    const cta = document.getElementById('ctaBtn');
+    const rst = document.getElementById('resetBtn');
+    const bbq = document.getElementById('bbqToggle').checked;
+    const pool = document.getElementById('poolToggle').checked;
+
+    if (!checkin) {
+      dateCardBody.innerHTML = '<div class="hint">체크인 날짜를 선택해 주세요</div>';
+      optionCard.style.display = 'none';
+      msgBox.classList.remove('visible');
+      cta.className = 'cta disabled'; cta.href='#';
+      rst.style.display = 'none';
+      return;
+    }
+
+    rst.style.display = 'block';
+    const ci = fromYMD(checkin);
+
+    if (!checkout) {
+      dateCardBody.innerHTML = `
+        <div class="dates-row">
+          <div class="date-pill"><div class="label">CHECK-IN</div><div class="value">${fmtDate(ci)}</div></div>
+          <div class="date-arrow">→</div>
+          <div class="date-pill"><div class="label">CHECK-OUT</div><div class="value" style="color:#c8c0b4">선택 중</div></div>
+        </div>`;
+      optionCard.style.display = 'none';
+      msgBox.classList.remove('visible');
+      cta.className = 'cta disabled'; cta.href='#';
+      return;
+    }
+
+    const co = fromYMD(checkout);
+    const { total, nights } = calcNights(ci, co);
+    const disc = nights >= 2 ? 0.9 : 1;
+    const roomCost = Math.round(total * disc);
+    const guestCost = extraGuest * OPTIONS.guest * nights;
+    const bbqCost = bbq ? OPTIONS.bbq : 0;
+    const poolCost = pool ? OPTIONS.pool : 0;
+    const grandTotal = roomCost + guestCost + bbqCost + poolCost;
+
+    dateCardBody.innerHTML = `
+      <div class="dates-row">
+        <div class="date-pill"><div class="label">CHECK-IN</div><div class="value">${fmtDate(ci)}</div></div>
+        <div class="date-arrow">→</div>
+        <div class="date-pill"><div class="label">CHECK-OUT</div><div class="value">${fmtDate(co)}</div></div>
+      </div>
+      <div class="nights-row">
+        <span>${nights}박</span>
+        <div>
+          <div class="total-price">${(grandTotal/10000).toFixed(0)}만원</div>
+          ${nights>=2 ? '<div class="discount-note">연박 10% 할인 적용</div>' : ''}
+        </div>
+      </div>`;
+
+    optionCard.style.display = 'block';
+
+    const msg = buildMsg(ci, co, nights, grandTotal, bbq, pool);
+    document.getElementById('msgText').textContent = msg;
+    msgBox.classList.add('visible');
+
+    cta.className = 'cta';
+    cta.href = KAKAO;
+  }
+
+  function render() {
+    const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    document.getElementById('monthTitle').textContent = `${curY}년 ${months[curM]}`;
+    const grid = document.getElementById('days');
+    grid.innerHTML = '';
+    const first = new Date(curY,curM,1).getDay();
+    const last = new Date(curY,curM+1,0).getDate();
+    for (let i=0;i<first;i++) { const e=document.createElement('div'); e.className='day empty'; grid.appendChild(e); }
+    for (let d=1;d<=last;d++) {
+      const date=new Date(curY,curM,d), ymd=toYMD(date), type=getDayType(date);
+      const isUnavail=unavail.includes(ymd), isPast=date<today;
+      const isCI=ymd===checkin, isCO=ymd===checkout;
+      const isRange=checkin&&checkout&&ymd>checkin&&ymd<checkout;
+      const cell=document.createElement('div');
+      let cls='day';
+      if(isPast) cls+=' past'; else if(isUnavail) cls+=' unavail';
+      if(isCI) cls+=' checkin'; if(isCO) cls+=' checkout'; if(isRange) cls+=' inrange';
+      cell.className=cls; cell.setAttribute('data-t',type);
+      if(isUnavail) {
+        cell.innerHTML=`<span class="dn" style="text-decoration:line-through">${d}</span><span class="dp">마감</span>`;
+      } else {
+        cell.innerHTML=`<span class="dn">${d}</span><span class="dp">${isPast?'':fmt(cfg.prices[type])}</span>`;
+      }
+      if(!isPast&&!isUnavail) cell.onclick=()=>selectDay(ymd);
+      grid.appendChild(cell);
+    }
+  }
+
+  function init() {
+    curY=today.getFullYear(); curM=today.getMonth();
+    document.getElementById('guestMinus').disabled=true;
+    render(); updateSummary();
+  }
+  init();
+</script>
+</body>
+</html>
