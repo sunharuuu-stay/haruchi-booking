@@ -169,6 +169,7 @@
       <div class="option-left">
         <span class="option-name">추가 인원</span>
         <span class="option-price">2만원 · 인 · 박</span>
+        <span class="option-price" style="margin-top:3px; font-size:10px; color:#c8c0b4;">24개월 이하 영아 무료 · 임산부 동반 시 추가인원 무료</span>
       </div>
       <div class="stepper">
         <button onclick="changeGuest(-1)" id="guestMinus">−</button>
@@ -212,8 +213,8 @@
   <button class="reset-btn" id="resetBtn" onclick="resetSelection()">선택 초기화</button>
 
   <div class="notice">
-    24개월 미만 유아는 인원에 포함되지 않아요.<br>
-    임산부 동반 시 추가 인원 요금이 면제됩니다 (증빙 필요).
+    · 24개월 이하 영아는 추가요금 없이 인원에 포함됩니다.<br>단, 침구류 등 별도 용품은 제공되지 않아요.<br><br>
+    · 임산부 동반 시 추가인원 무료 (예약 시 산모수첩 증빙 필요)
   </div>
 </div>
 
@@ -224,8 +225,8 @@
   // ── 수정 구역 시작 ──────────────────────────
 
   const UNITS = {
-    goyo: { name: '고요', prices: { weekday:300000, fri:500000, sat:500000, sun:400000, holiday:550000 } },
-    ongi: { name: '온기', prices: { weekday:400000, fri:600000, sat:600000, sun:500000, holiday:650000 } }
+    goyo: { name: '여백채', prices: { weekday:300000, fri:500000, sat:500000, sun:400000, holiday:550000 } },
+    ongi: { name: '온기채', prices: { weekday:400000, fri:600000, sat:600000, sun:500000, holiday:650000 } }
   };
 
   const OPTIONS = {
