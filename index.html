@@ -242,12 +242,12 @@
   const UNIT_NAMES = { goyo: '여백채', ongi: '온기채' };
   const UNIT_NOTION = unit === 'goyo' ? '여백채' : '온기채';
 
-  // 기본값 (Notion 로딩 전 표시)
-  let PRICES = { weekday:300000, fri:500000, sat:500000, sun:400000, holiday:550000 };
+  // 기본값 (Notion에 없는 날짜는 가격 미표시)
+  let PRICES = { weekday:0, fri:0, sat:0, sun:0, holiday:0 };
   let OPTIONS = { bbq:30000, pool:60000, guest:20000 };
   let UNAVAILABLE = [];
-  let DATE_PRICES = {};   // 날짜별 가격 override { 'YYYY-MM-DD': 가격 }
-  let DATE_COLORS = {};   // 날짜별 색상 override { 'YYYY-MM-DD': '주말(빨강)' }
+  let DATE_PRICES = {};
+  let DATE_COLORS = {};
 
   // ── Notion API 호출 (Cloudflare Worker 경유) ──────────────────────────
 
@@ -509,7 +509,8 @@
       if(isUnavail) {
         cell.innerHTML=`<span class="dn" style="text-decoration:line-through">${d}</span><span class="dp">마감</span>`;
       } else {
-        cell.innerHTML=`<span class="dn">${d}</span><span class="dp">${isPast?'':fmt(displayPrice)}</span>`;
+        const priceText = displayPrice > 0 ? fmt(displayPrice) : '';
+        cell.innerHTML=`<span class="dn">${d}</span><span class="dp">${isPast?'':priceText}</span>`;
       }
       if(!isPast&&!isUnavail) cell.onclick=()=>selectDay(ymd);
       grid.appendChild(cell);
