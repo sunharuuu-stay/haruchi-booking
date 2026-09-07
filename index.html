@@ -240,12 +240,14 @@
   ];
 
   const UNIT_NAMES = { goyo: '여백채', ongi: '온기채' };
-  const PRICE_KEY = unit === 'goyo' ? '여백채' : '온기채';
+  const UNIT_NOTION = unit === 'goyo' ? '여백채' : '온기채';
 
   // 기본값 (Notion 로딩 전 표시)
   let PRICES = { weekday:300000, fri:500000, sat:500000, sun:400000, holiday:550000 };
   let OPTIONS = { bbq:30000, pool:60000, guest:20000 };
   let UNAVAILABLE = [];
+  let DATE_PRICES = {};   // 날짜별 가격 override { 'YYYY-MM-DD': 가격 }
+  let DATE_COLORS = {};   // 날짜별 색상 override { 'YYYY-MM-DD': '주말(빨강)' }
 
   // ── Notion API 호출 (Cloudflare Worker 경유) ──────────────────────────
 
@@ -258,27 +260,27 @@
 
   async function loadNotionData() {
     try {
-      // 1. 요금 설정
-      const priceData = await notionQuery(DB_PRICES);
+      // 1. 요금 설정 (날짜별)
+      const priceData = await notionQuery(DB_PRICES, {
+        or: [
+          { property: '객실', select: { equals: UNIT_NOTION } },
+          { property: '객실', select: { equals: '전체' } }
+        ]
+      });
       if (priceData.results) {
-        const keyMap = { '평일':'weekday', '금요일':'fri', '토요일':'sat', '일요일':'sun', '명절':'holiday', '추가인원':'guest', '바베큐':'bbq', '온수풀':'pool' };
         priceData.results.forEach(row => {
-          const name = row.properties['구분']?.title?.[0]?.plain_text;
-          const val = row.properties[PRICE_KEY]?.number;
-          if (name && val !== null && val !== undefined) {
-            const key = keyMap[name];
-            if (key) {
-              if (['weekday','fri','sat','sun','holiday'].includes(key)) PRICES[key] = val;
-              else OPTIONS[key] = val;
-            }
-          }
+          const date = row.properties['날짜']?.title?.[0]?.plain_text;
+          const price = row.properties['가격']?.number;
+          const color = row.properties['색상']?.select?.name;
+          if (date && price) DATE_PRICES[date] = price;
+          if (date && color) DATE_COLORS[date] = color;
         });
       }
 
       // 2. 예약 불가 날짜
       const unavailData = await notionQuery(DB_UNAVAIL, {
         or: [
-          { property: '객실', select: { equals: unit === 'goyo' ? '여백채' : '온기채' } },
+          { property: '객실', select: { equals: UNIT_NOTION } },
           { property: '객실', select: { equals: '전체' } }
         ]
       });
@@ -301,11 +303,6 @@
           if (noticeEl) { noticeEl.textContent = content; noticeEl.style.display = 'block'; }
         }
       }
-
-      // 옵션 가격 UI 업데이트
-      document.getElementById('bbqPrice').textContent = `${OPTIONS.bbq/10000}만원`;
-      document.getElementById('poolPrice').textContent = `${OPTIONS.pool/10000}만원`;
-      document.getElementById('guestPrice').textContent = `${OPTIONS.guest/10000}만원 · 인 · 박`;
 
       render();
     } catch(e) {
@@ -335,7 +332,13 @@
   function calcNights(ci, co) {
     let total=0, nights=0;
     const cur = new Date(ci);
-    while (cur < co) { total += PRICES[getDayType(cur)]; nights++; cur.setDate(cur.getDate()+1); }
+    while (cur < co) {
+      const ymd = toYMD(cur);
+      const price = DATE_PRICES[ymd] !== undefined ? DATE_PRICES[ymd] : PRICES[getDayType(cur)];
+      total += price;
+      nights++;
+      cur.setDate(cur.getDate()+1);
+    }
     return { total, nights };
   }
 
@@ -482,17 +485,32 @@
     for (let d=1;d<=last;d++) {
       const date=new Date(curY,curM,d), ymd=toYMD(date), type=getDayType(date);
       const isUnavail=UNAVAILABLE.includes(ymd), isPast=date<today;
+
+      // 날짜별 색상 override
+      const colorMap = {
+        '기본(검정)': 'weekday',
+        '주말(빨강)': 'sun',
+        '공휴일(주황)': 'holiday',
+        '성수기(파랑)': 'fri',
+        '특가(초록)': 'weekday'
+      };
+      const overrideColor = DATE_COLORS[ymd];
+      const displayType = overrideColor ? (colorMap[overrideColor] || type) : type;
+
+      // 날짜별 가격 override
+      const displayPrice = DATE_PRICES[ymd] !== undefined ? DATE_PRICES[ymd] : PRICES[type];
       const isCI=ymd===checkin, isCO=ymd===checkout;
       const isRange=checkin&&checkout&&ymd>checkin&&ymd<checkout;
       const cell=document.createElement('div');
       let cls='day';
       if(isPast) cls+=' past'; else if(isUnavail) cls+=' unavail';
       if(isCI) cls+=' checkin'; if(isCO) cls+=' checkout'; if(isRange) cls+=' inrange';
-      cell.className=cls; cell.setAttribute('data-t',type);
+      cell.className=cls; cell.setAttribute('data-t', displayType);
       if(isUnavail) {
         cell.innerHTML=`<span class="dn" style="text-decoration:line-through">${d}</span><span class="dp">마감</span>`;
       } else {
-        cell.innerHTML=`<span class="dn">${d}</span><span class="dp">${isPast?'':fmt(PRICES[type])}</span>`;
+        cell.innerHTML=`<span class="dn">${d}</span><span class="dp">${isPast?'':fmt(displayPrice)}</span>`;
+      }
       }
       if(!isPast&&!isUnavail) cell.onclick=()=>selectDay(ymd);
       grid.appendChild(cell);
