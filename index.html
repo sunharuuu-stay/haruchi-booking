@@ -146,6 +146,9 @@
     <div class="unit-name" id="unitName">고요</div>
   </div>
 
+  <!-- 공지사항 -->
+  <div id="noticeBar" style="display:none; background:#f5f0e8; border-radius:8px; padding:10px 14px; font-size:12px; color:#6a6258; margin-bottom:16px; text-align:center; line-height:1.6;"></div>
+
   <div class="cal-nav">
     <button onclick="changeMonth(-1)">‹</button>
     <span class="month" id="monthTitle"></span>
@@ -168,7 +171,7 @@
     <div class="option-row">
       <div class="option-left">
         <span class="option-name">추가 인원</span>
-        <span class="option-price">2만원 · 인 · 박</span>
+        <span class="option-price" id="guestPrice">2만원 · 인 · 박</span>
         <span class="option-price" style="margin-top:3px; font-size:10px; color:#c8c0b4;">24개월 이하 영아 무료 · 임산부 동반 시 추가인원 무료</span>
       </div>
       <div class="stepper">
@@ -180,7 +183,7 @@
     <div class="option-row">
       <div class="option-left">
         <span class="option-name">바베큐</span>
-        <span class="option-price">3만원</span>
+        <span class="option-price" id="bbqPrice">3만원</span>
       </div>
       <label class="toggle">
         <input type="checkbox" id="bbqToggle" onchange="updateSummary()">
@@ -191,7 +194,7 @@
     <div class="option-row">
       <div class="option-left">
         <span class="option-name">온수풀</span>
-        <span class="option-price">6만원</span>
+        <span class="option-price" id="poolPrice">6만원</span>
       </div>
       <label class="toggle">
         <input type="checkbox" id="poolToggle" onchange="updateSummary()">
@@ -222,23 +225,13 @@
   const params = new URLSearchParams(window.location.search);
   const unit = params.get('unit') || 'goyo';
 
-  // ── 수정 구역 시작 ──────────────────────────
+  // ── 설정 ──────────────────────────
 
-  const UNITS = {
-    goyo: { name: '여백채', prices: { weekday:300000, fri:500000, sat:500000, sun:400000, holiday:550000 } },
-    ongi: { name: '온기채', prices: { weekday:400000, fri:600000, sat:600000, sun:500000, holiday:650000 } }
-  };
-
-  const OPTIONS = {
-    bbq: 30000,   // 바베큐
-    pool: 60000,  // 온수풀
-    guest: 20000  // 추가 인원 (1인 1박)
-  };
-
-  const UNAVAILABLE = {
-    goyo: [],
-    ongi: []
-  };
+  const DB_PRICES = '38af54c5-1bf1-40e5-9849-fb83dd978f7f';
+  const DB_UNAVAIL = '3b4a2ae7-977d-43f2-b05d-e8757302bff7';
+  const DB_NOTICE = '556ff20e-a96f-433f-827a-a510df778b88';
+  const KAKAO = 'http://pf.kakao.com/_XBnwX';
+  const WORKER_URL = 'https://haruchi-notion.sun-haruuu.workers.dev';
 
   const HOLIDAYS = [
     '2025-09-05','2025-09-06','2025-09-07','2025-09-08',
@@ -246,13 +239,84 @@
     '2026-09-24','2026-09-25','2026-09-26','2026-09-27',
   ];
 
-  const KAKAO = 'http://pf.kakao.com/_XBnwX';
+  const UNIT_NAMES = { goyo: '여백채', ongi: '온기채' };
+  const PRICE_KEY = unit === 'goyo' ? '여백채' : '온기채';
 
-  // ── 수정 구역 끝 ──────────────────────────
+  // 기본값 (Notion 로딩 전 표시)
+  let PRICES = { weekday:300000, fri:500000, sat:500000, sun:400000, holiday:550000 };
+  let OPTIONS = { bbq:30000, pool:60000, guest:20000 };
+  let UNAVAILABLE = [];
 
-  const cfg = UNITS[unit] || UNITS.goyo;
-  const unavail = UNAVAILABLE[unit] || [];
-  document.getElementById('unitName').textContent = cfg.name;
+  // ── Notion API 호출 (Cloudflare Worker 경유) ──────────────────────────
+
+  async function notionQuery(dbId, filter) {
+    const p = new URLSearchParams({ db: dbId });
+    if (filter) p.set('filter', JSON.stringify({ filter }));
+    const res = await fetch(`${WORKER_URL}?${p.toString()}`);
+    return res.json();
+  }
+
+  async function loadNotionData() {
+    try {
+      // 1. 요금 설정
+      const priceData = await notionQuery(DB_PRICES);
+      if (priceData.results) {
+        const keyMap = { '평일':'weekday', '금요일':'fri', '토요일':'sat', '일요일':'sun', '명절':'holiday', '추가인원':'guest', '바베큐':'bbq', '온수풀':'pool' };
+        priceData.results.forEach(row => {
+          const name = row.properties['구분']?.title?.[0]?.plain_text;
+          const val = row.properties[PRICE_KEY]?.number;
+          if (name && val !== null && val !== undefined) {
+            const key = keyMap[name];
+            if (key) {
+              if (['weekday','fri','sat','sun','holiday'].includes(key)) PRICES[key] = val;
+              else OPTIONS[key] = val;
+            }
+          }
+        });
+      }
+
+      // 2. 예약 불가 날짜
+      const unavailData = await notionQuery(DB_UNAVAIL, {
+        or: [
+          { property: '객실', select: { equals: unit === 'goyo' ? '여백채' : '온기채' } },
+          { property: '객실', select: { equals: '전체' } }
+        ]
+      });
+      if (unavailData.results) {
+        UNAVAILABLE = unavailData.results
+          .filter(r => r.properties['상태']?.select?.name === '마감')
+          .map(r => r.properties['날짜']?.title?.[0]?.plain_text)
+          .filter(Boolean);
+      }
+
+      // 3. 공지사항
+      const noticeData = await notionQuery(DB_NOTICE, {
+        property: '표시', select: { equals: '켜짐' }
+      });
+      if (noticeData.results && noticeData.results.length > 0) {
+        const notice = noticeData.results[0];
+        const content = notice.properties['내용']?.rich_text?.[0]?.plain_text;
+        if (content) {
+          const noticeEl = document.getElementById('noticeBar');
+          if (noticeEl) { noticeEl.textContent = content; noticeEl.style.display = 'block'; }
+        }
+      }
+
+      // 옵션 가격 UI 업데이트
+      document.getElementById('bbqPrice').textContent = `${OPTIONS.bbq/10000}만원`;
+      document.getElementById('poolPrice').textContent = `${OPTIONS.pool/10000}만원`;
+      document.getElementById('guestPrice').textContent = `${OPTIONS.guest/10000}만원 · 인 · 박`;
+
+      render();
+    } catch(e) {
+      console.log('Notion 연동 오류, 기본값 사용:', e);
+      render();
+    }
+  }
+
+  // ──────────────────────────────────────────
+
+  document.getElementById('unitName').textContent = UNIT_NAMES[unit] || '여백채';
 
   let curY, curM, checkin = null, checkout = null, extraGuest = 0;
   const today = new Date(); today.setHours(0,0,0,0);
@@ -271,7 +335,7 @@
   function calcNights(ci, co) {
     let total=0, nights=0;
     const cur = new Date(ci);
-    while (cur < co) { total += cfg.prices[getDayType(cur)]; nights++; cur.setDate(cur.getDate()+1); }
+    while (cur < co) { total += PRICES[getDayType(cur)]; nights++; cur.setDate(cur.getDate()+1); }
     return { total, nights };
   }
 
@@ -290,7 +354,7 @@
 
   function selectDay(ymd) {
     const d = fromYMD(ymd);
-    if (d < today || unavail.includes(ymd)) return;
+    if (d < today || UNAVAILABLE.includes(ymd)) return;
     if (!checkin || (checkin && checkout)) {
       checkin = ymd; checkout = null;
     } else {
@@ -299,7 +363,7 @@
         const ci = fromYMD(checkin), co = fromYMD(ymd);
         let blocked = false;
         const cur = new Date(ci); cur.setDate(cur.getDate()+1);
-        while (cur < co) { if (unavail.includes(toYMD(cur))) { blocked=true; break; } cur.setDate(cur.getDate()+1); }
+        while (cur < co) { if (UNAVAILABLE.includes(toYMD(cur))) { blocked=true; break; } cur.setDate(cur.getDate()+1); }
         if (blocked) { checkin = ymd; checkout = null; }
         else checkout = ymd;
       }
@@ -327,7 +391,7 @@
   }
 
   function buildMsg(ci, co, nights, grandTotal, bbq, pool) {
-    let msg = `하루치 ${cfg.name} 예약 문의\n`;
+    let msg = `하루치 ${UNIT_NAMES[unit]} 예약 문의\n`;
     msg += `──────────────\n`;
     msg += `체크인  ${fmtDate(ci)}\n`;
     msg += `체크아웃  ${fmtDate(co)} (${nights}박)\n`;
@@ -417,7 +481,7 @@
     for (let i=0;i<first;i++) { const e=document.createElement('div'); e.className='day empty'; grid.appendChild(e); }
     for (let d=1;d<=last;d++) {
       const date=new Date(curY,curM,d), ymd=toYMD(date), type=getDayType(date);
-      const isUnavail=unavail.includes(ymd), isPast=date<today;
+      const isUnavail=UNAVAILABLE.includes(ymd), isPast=date<today;
       const isCI=ymd===checkin, isCO=ymd===checkout;
       const isRange=checkin&&checkout&&ymd>checkin&&ymd<checkout;
       const cell=document.createElement('div');
@@ -428,7 +492,7 @@
       if(isUnavail) {
         cell.innerHTML=`<span class="dn" style="text-decoration:line-through">${d}</span><span class="dp">마감</span>`;
       } else {
-        cell.innerHTML=`<span class="dn">${d}</span><span class="dp">${isPast?'':fmt(cfg.prices[type])}</span>`;
+        cell.innerHTML=`<span class="dn">${d}</span><span class="dp">${isPast?'':fmt(PRICES[type])}</span>`;
       }
       if(!isPast&&!isUnavail) cell.onclick=()=>selectDay(ymd);
       grid.appendChild(cell);
@@ -439,6 +503,7 @@
     curY=today.getFullYear(); curM=today.getMonth();
     document.getElementById('guestMinus').disabled=true;
     render(); updateSummary();
+    loadNotionData(); // Notion에서 데이터 로드
   }
   init();
 </script>
