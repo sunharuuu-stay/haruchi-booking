@@ -55,6 +55,12 @@
   .day[data-t="fri"] .dp, .day[data-t="sat"] .dp { color: #9c7e68; }
   .day[data-t="sun"] .dn { color: #8a6f5e; }
   .day[data-t="sun"] .dp { color: #b89484; }
+  .day[data-t="red"] .dn { color: #c0392b; font-weight: 500; }
+  .day[data-t="red"] .dp { color: #e74c3c; }
+  .day[data-t="blue"] .dn { color: #2471a3; font-weight: 500; }
+  .day[data-t="blue"] .dp { color: #5dade2; }
+  .day[data-t="green"] .dn { color: #1e8449; font-weight: 500; }
+  .day[data-t="green"] .dp { color: #27ae60; }
   .day[data-t="holiday"] .dn { color: #9a5530; font-weight: 500; }
   .day[data-t="holiday"] .dp { color: #c47a52; }
 
@@ -489,10 +495,10 @@
       // 날짜별 색상 override
       const colorMap = {
         '기본(검정)': 'weekday',
-        '주말(빨강)': 'sun',
+        '주말(빨강)': 'red',
         '공휴일(주황)': 'holiday',
-        '성수기(파랑)': 'fri',
-        '특가(초록)': 'weekday'
+        '성수기(파랑)': 'blue',
+        '특가(초록)': 'green'
       };
       const overrideColor = DATE_COLORS[ymd];
       const displayType = overrideColor ? (colorMap[overrideColor] || type) : type;
