@@ -33,7 +33,7 @@
   .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 
   .day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: background 0.1s; user-select: none; }
-  .day:hover:not(.empty):not(.unavail):not(.past) { background: #ede9e3; }
+  .day:hover:not(.empty):not(.past) { background: #ede9e3; }
   .day.empty, .day.past { cursor: default; }
   .day.past { opacity: 0.3; }
   .day.unavail { cursor: not-allowed; background: #f2efeb; }
@@ -363,19 +363,39 @@
 
   function selectDay(ymd) {
     const d = fromYMD(ymd);
-    if (d < today || UNAVAILABLE.includes(ymd)) return;
+    if (d < today) return;
+
+    const isUnavail = UNAVAILABLE.includes(ymd);
+
+    // 체크인이 선택된 상태에서 체크아웃 선택 중인 경우
+    if (checkin && !checkout && ymd > checkin) {
+      // 마감일도 체크아웃으로는 선택 가능 (해당 날 밤에 머무는 게 아니니까)
+      const ci = fromYMD(checkin), co = fromYMD(ymd);
+      let blocked = false;
+      const cur = new Date(ci); cur.setDate(cur.getDate()+1);
+      // 체크인 다음날 ~ 체크아웃 전날까지만 마감 여부 확인 (체크아웃 당일 제외)
+      while (cur < co) {
+        if (UNAVAILABLE.includes(toYMD(cur))) { blocked=true; break; }
+        cur.setDate(cur.getDate()+1);
+      }
+      if (blocked) {
+        // 중간에 마감일이 있으면 → 새 체크인으로 설정 (단, 마감일이면 무시)
+        if (!isUnavail) { checkin = ymd; checkout = null; }
+      } else {
+        checkout = ymd;
+      }
+      render(); updateSummary();
+      return;
+    }
+
+    // 마감일은 체크인으로 선택 불가
+    if (isUnavail) return;
+
     if (!checkin || (checkin && checkout)) {
       checkin = ymd; checkout = null;
     } else {
-      if (ymd <= checkin) { checkin = ymd; checkout = null; }
-      else {
-        const ci = fromYMD(checkin), co = fromYMD(ymd);
-        let blocked = false;
-        const cur = new Date(ci); cur.setDate(cur.getDate()+1);
-        while (cur < co) { if (UNAVAILABLE.includes(toYMD(cur))) { blocked=true; break; } cur.setDate(cur.getDate()+1); }
-        if (blocked) { checkin = ymd; checkout = null; }
-        else checkout = ymd;
-      }
+      // ymd <= checkin 인 경우 새 체크인
+      checkin = ymd; checkout = null;
     }
     render(); updateSummary();
   }
@@ -518,7 +538,8 @@
         const priceText = displayPrice > 0 ? fmt(displayPrice) : '';
         cell.innerHTML=`<span class="dn">${d}</span><span class="dp">${isPast?'':priceText}</span>`;
       }
-      if(!isPast&&!isUnavail) cell.onclick=()=>selectDay(ymd);
+      // 마감일도 체크아웃 후보가 될 수 있으니 클릭은 항상 허용 (selectDay 내부에서 판단)
+      if(!isPast) cell.onclick=()=>selectDay(ymd);
       grid.appendChild(cell);
     }
   }
