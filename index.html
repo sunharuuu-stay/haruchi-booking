@@ -205,7 +205,7 @@
       <div class="option-left">
         <span class="option-name">온수풀</span>
         <span class="option-price" id="poolPrice">6만원</span>
-        <span class="option-price" id="poolNote" style="display:none; font-size:10px; color:#c8c0b4;">두 동 각 6만원 · 총 12만원</span>
+        <span class="option-price" id="poolNote" style="display:none; font-size:10px; color:#c8c0b4;">두 동 각 6만원 · 합계 12만원</span>
       </div>
       <label class="toggle">
         <input type="checkbox" id="poolToggle" onchange="updateSummary()">
@@ -253,8 +253,8 @@
   const UNIT_NAMES = { goyo: '여백채', ongi: '온기채', all: '전체 대관' };
   const UNIT_CAPACITY = {
     goyo: { base: 4, max: 6 },
-    ongi: { base: 6, max: 9 },
-    all:  { base: 10, max: 15 }
+    ongi: { base: 6, max: 8 },
+    all:  { base: 10, max: 14 }
   };
   const UNIT_NOTION = unit === 'goyo' ? '여백채' : unit === 'ongi' ? '온기채' : '전체';
 
