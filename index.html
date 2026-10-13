@@ -138,7 +138,7 @@
     <div class="brand-label">haruchi · 하루치</div>
     <div class="unit-name" id="unitName">여백채</div>
     <div class="unit-capacity" id="unitCapacity"></div>
-    <div class="unit-badge" id="unitBadge" style="display:none">전체 대관 시 객실 요금 10% 할인 · 달력 요금은 할인가</div>
+    <div class="unit-badge" id="unitBadge" style="display:none">전체 대관 혜택 · 바베큐 1회 무료</div>
   </div>
 
   <!-- 공지사항 -->
@@ -179,8 +179,8 @@
     <div class="option-row">
       <div class="option-left">
         <span class="option-name">바베큐</span>
-        <span class="option-price">3만원</span>
-        <span class="option-note all-only" style="display:none">한 동에서 진행돼요 · 두 동 모두 원하시면 카카오로 문의 남겨주세요</span>
+        <span class="option-price" id="bbqPriceLabel">3만원</span>
+        <span class="option-note all-only" style="display:none">전체 대관 혜택으로 한 동 1회 무료 · 두 동 모두 원하시면 카카오로 문의해 주세요 (추가 1회 3만원)</span>
         <div class="unit-pick" id="bbqPick">
           <span class="pick-label">진행 동</span>
           <button data-v="여백채" onclick="pickUnit('bbq','여백채')">여백채</button>
@@ -241,12 +241,9 @@
   const KAKAO = 'http://pf.kakao.com/_XBnwX';
   const WORKER_URL = 'https://haruchi-notion.sun-haruuu.workers.dev';
 
-  // 할인 설정
-  const FULL_DISCOUNT = 0.10;   // 전체 대관 할인 (객실 요금에만)
+  // 할인·혜택 설정
   const STAY_DISCOUNT = 0.10;   // 연박(2박 이상) 할인 (객실 요금에만)
-  // 'multiply' : 전체대관 할인 후 금액에서 다시 10% (총 19% 할인)
-  // 'add'      : 두 할인을 원가 기준으로 더함 (총 20% 할인)
-  const DISCOUNT_STACK = 'multiply';
+  // 전체 대관: 객실 할인 없음, 바베큐 1회(한 동) 무료
 
   const HOLIDAYS = [
     '2025-09-05','2025-09-06','2025-09-07','2025-09-08',
@@ -424,13 +421,8 @@
 
   // 객실 요금 할인 계산 (옵션 제외)
   function calcRoom(total, nights) {
-    const fullDisc = IS_ALL ? Math.round(total * FULL_DISCOUNT) : 0;
-    let stayDisc = 0;
-    if (nights >= 2) {
-      const base = DISCOUNT_STACK === 'add' ? total : (total - fullDisc);
-      stayDisc = Math.round(base * STAY_DISCOUNT);
-    }
-    return { fullDisc, stayDisc, room: total - fullDisc - stayDisc };
+    const stayDisc = nights >= 2 ? Math.round(total * STAY_DISCOUNT) : 0;
+    return { stayDisc, room: total - stayDisc };
   }
 
   function changeGuest(dir) {
@@ -501,7 +493,7 @@
     document.getElementById('guestCount').textContent = '0';
     document.getElementById('guestMinus').disabled = true;
     document.getElementById('guestPlus').disabled = MAX_EXTRA === 0;
-    document.getElementById('bbqToggle').checked = false;
+    document.getElementById('bbqToggle').checked = IS_ALL;  // 전체 대관은 무료 바베큐 기본 선택
     document.getElementById('poolToggle').checked = false;
     render(); updateSummary();
   }
@@ -524,14 +516,11 @@
     msg += `체크인  ${fmtDate(ci)}\n`;
     msg += `체크아웃  ${fmtDate(co)} (${nights}박)\n`;
     if (extraGuest > 0) msg += `추가 인원  ${extraGuest}명\n`;
-    if (bbq) msg += `바베큐  신청${where('bbq')}\n`;
+    if (bbq) msg += `바베큐  신청${where('bbq')}${IS_ALL ? ' (전체 대관 1회 무료)' : ''}\n`;
     if (pool) msg += `온수풀  신청${where('pool')}\n`;
     msg += `──────────────\n`;
     msg += `예상 금액  ${won(grandTotal)}`;
-    const discs = [];
-    if (IS_ALL) discs.push('전체 대관 할인');
-    if (nights >= 2) discs.push('연박 할인');
-    if (discs.length) msg += `\n(${discs.join(' · ')} 적용)`;
+    if (nights >= 2) msg += `\n(연박 할인 적용)`;
     return msg;
   }
 
@@ -572,21 +561,20 @@
 
     const co = fromYMD(checkout);
     const { total, nights } = calcNights(ci, co);
-    const { fullDisc, stayDisc, room } = calcRoom(total, nights);
+    const { stayDisc, room } = calcRoom(total, nights);
     const guestCost = extraGuest * OPTIONS.guest * nights;
-    const bbqCost = bbq ? OPTIONS.bbq : 0;     // 전체 대관도 한 동 기준
+    const bbqCost = (bbq && !IS_ALL) ? OPTIONS.bbq : 0;   // 전체 대관은 1회 무료
     const poolCost = pool ? OPTIONS.pool : 0;
     const grandTotal = room + guestCost + bbqCost + poolCost;
 
     let rows = `<div class="row"><span>객실 요금 (${nights}박)</span><span>${won(total)}</span></div>`;
-    if (fullDisc) rows += `<div class="row minus"><span>전체 대관 할인 10%</span><span>−${won(fullDisc)}</span></div>`;
     if (stayDisc) rows += `<div class="row minus"><span>연박 할인 10%</span><span>−${won(stayDisc)}</span></div>`;
     if (guestCost) rows += `<div class="row"><span>추가 인원 ${extraGuest}명</span><span>+${won(guestCost)}</span></div>`;
     if (bbqCost) rows += `<div class="row"><span>바베큐</span><span>+${won(bbqCost)}</span></div>`;
+    if (IS_ALL && bbq) rows += `<div class="row minus"><span>바베큐 (전체 대관 혜택)</span><span>무료</span></div>`;
     if (poolCost) rows += `<div class="row"><span>온수풀</span><span>+${won(poolCost)}</span></div>`;
 
     const discNotes = [];
-    if (IS_ALL) discNotes.push('전체 대관 10%');
     if (nights >= 2) discNotes.push('연박 10%');
 
     dateCardBody.innerHTML = `
@@ -636,9 +624,9 @@
       const overrideColor = DATE_COLORS[ymd];
       const displayType = overrideColor ? (colorMap[overrideColor] || type) : type;
 
-      // 달력 표시 요금: 전체 대관은 10% 할인가로 표시
+      // 달력 표시 요금 (전체 대관은 두 동 합산)
       const rawPrice = DATE_PRICES[ymd] !== undefined ? DATE_PRICES[ymd] : PRICES[type];
-      const displayPrice = IS_ALL ? Math.round(rawPrice * (1 - FULL_DISCOUNT)) : rawPrice;
+      const displayPrice = rawPrice;
 
       const isCI=ymd===checkin, isCO=ymd===checkout;
       const isRange=checkin&&checkout&&ymd>checkin&&ymd<checkout;
@@ -666,7 +654,9 @@
     if (IS_ALL) {
       document.querySelectorAll('.all-only').forEach(el => el.style.display = 'block');
       document.getElementById('unitBadge').style.display = 'inline-block';
-      document.getElementById('bottomNotice').innerHTML += '<br><br>· 전체 대관은 객실 요금 10% 할인, 연박 시 연박 할인이 추가로 적용돼요.<br>바베큐·온수풀은 한 동 기준이며, 두 동 모두 원하시면 문의 주세요.<br><br>· 전체 대관은 최대 14인까지 예약 가능하며, 14인 초과 시 카카오로 문의해 주세요.';
+      document.getElementById('bbqPriceLabel').textContent = '3만원 → 무료 (1회)';
+      document.getElementById('bbqToggle').checked = true;
+      document.getElementById('bottomNotice').innerHTML += '<br><br>· 전체 대관 시 바베큐 1회(한 동)를 무료로 드려요. 두 동 모두 원하시면 카카오로 문의해 주세요 (추가 1회 3만원).<br>온수풀은 한 동 기준이며, 두 동 모두 원하시면 문의 주세요.<br>연박 시 연박 할인 10%가 적용돼요.<br><br>· 전체 대관은 최대 14인까지 예약 가능하며, 14인 초과 시 카카오로 문의해 주세요.';
     }
     render(); updateSummary();
     ensureMonths();
