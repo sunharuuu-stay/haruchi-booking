@@ -23,6 +23,7 @@
   .unit-name { font-family: 'Cormorant Garamond', serif; font-size: 44px; font-weight: 300; letter-spacing: 0.08em; color: #1c1c1a; }
   .unit-capacity { font-size: 11px; color: #b0a898; letter-spacing: 0.05em; margin-top: 8px; }
   .unit-capacity span { color: #6a6258; }
+  .unit-badge { display: inline-block; margin-top: 10px; font-size: 10px; color: #9c7e68; background: #f5f0e8; border-radius: 10px; padding: 4px 10px; letter-spacing: 0.02em; }
 
   .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .cal-nav button { background: none; border: none; cursor: pointer; color: #b0a898; font-size: 18px; padding: 6px 10px; border-radius: 6px; transition: color 0.15s, background 0.15s; }
@@ -78,11 +79,23 @@
   .total-price { font-size: 16px; font-weight: 500; color: #1c1c1a; }
   .discount-note { font-size: 10px; color: #a09488; margin-top: 2px; text-align: right; }
 
-  .option-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f5f1ec; }
+  .breakdown { font-size: 11px; color: #8a8278; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ece7e0; line-height: 1.9; }
+  .breakdown .row { display: flex; justify-content: space-between; }
+  .breakdown .minus { color: #9c7e68; }
+  .stay-note { margin-top: 10px; font-size: 10px; color: #a09488; background: #f9f7f4; border-radius: 6px; padding: 7px 10px; line-height: 1.6; }
+
+  .option-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f5f1ec; gap: 12px; }
   .option-row:last-child { border-bottom: none; }
   .option-left { display: flex; flex-direction: column; gap: 2px; }
   .option-name { font-size: 13px; color: #1c1c1a; }
   .option-price { font-size: 11px; color: #b0a898; }
+  .option-note { font-size: 10px; color: #c8c0b4; margin-top: 3px; line-height: 1.5; }
+
+  .unit-pick { display: none; gap: 6px; margin-top: 8px; align-items: center; }
+  .unit-pick.visible { display: flex; }
+  .unit-pick .pick-label { font-size: 10px; color: #a09488; margin-right: 2px; }
+  .unit-pick button { padding: 5px 11px; font-size: 11px; border: 1px solid #e0dbd4; border-radius: 14px; background: #fff; color: #6a6258; cursor: pointer; font-family: inherit; transition: background 0.1s; }
+  .unit-pick button.on { background: #2d2520; color: #fff; border-color: #2d2520; }
 
   .stepper { display: flex; align-items: center; gap: 10px; }
   .stepper button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e0dbd4; background: #fff; color: #1c1c1a; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.1s; line-height: 1; }
@@ -90,7 +103,7 @@
   .stepper button:disabled { opacity: 0.3; cursor: default; }
   .stepper .count { font-size: 14px; font-weight: 400; min-width: 16px; text-align: center; color: #1c1c1a; }
 
-  .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
+  .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
   .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
   .toggle-track { position: absolute; inset: 0; background: #e0dbd4; border-radius: 11px; transition: background 0.2s; }
   .toggle input:checked + .toggle-track { background: #2d2520; }
@@ -100,40 +113,12 @@
   .hint { font-size: 12px; color: #c8c0b4; text-align: center; padding: 8px 0; }
 
   /* 메시지 미리보기 */
-  .msg-box {
-    margin-top: 12px;
-    padding: 16px 20px;
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid #e8e3dc;
-    display: none;
-  }
+  .msg-box { margin-top: 12px; padding: 16px 20px; background: #fff; border-radius: 12px; border: 1px solid #e8e3dc; display: none; }
   .msg-box.visible { display: block; }
   .msg-box-title { font-size: 9px; letter-spacing: 0.15em; color: #b0a898; text-transform: uppercase; margin-bottom: 10px; }
   .msg-box-desc { font-size: 11px; color: #a09488; margin-bottom: 10px; line-height: 1.6; }
-  .msg-text {
-    background: #f9f7f4;
-    border-radius: 8px;
-    padding: 12px 14px;
-    font-size: 12px;
-    color: #4a4540;
-    line-height: 1.8;
-    white-space: pre-wrap;
-    word-break: break-all;
-    margin-bottom: 10px;
-  }
-  .copy-btn {
-    width: 100%;
-    padding: 10px;
-    background: none;
-    border: 1px solid #e0dbd4;
-    border-radius: 8px;
-    font-size: 12px;
-    color: #6a6258;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.1s;
-  }
+  .msg-text { background: #f9f7f4; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #4a4540; line-height: 1.8; white-space: pre-wrap; word-break: break-all; margin-bottom: 10px; }
+  .copy-btn { width: 100%; padding: 10px; background: none; border: 1px solid #e0dbd4; border-radius: 8px; font-size: 12px; color: #6a6258; cursor: pointer; font-family: inherit; transition: background 0.1s; }
   .copy-btn:hover { background: #f5f1ec; }
   .copy-btn.copied { color: #7a9a6a; border-color: #b8d4a8; }
 
@@ -153,6 +138,7 @@
     <div class="brand-label">haruchi · 하루치</div>
     <div class="unit-name" id="unitName">여백채</div>
     <div class="unit-capacity" id="unitCapacity"></div>
+    <div class="unit-badge" id="unitBadge" style="display:none">전체 대관 시 객실 요금 10% 할인 · 달력 요금은 할인가</div>
   </div>
 
   <!-- 공지사항 -->
@@ -180,20 +166,26 @@
     <div class="option-row">
       <div class="option-left">
         <span class="option-name">추가 인원</span>
-        <span class="option-price" id="guestPrice">2만원 · 인 · 박</span>
-        <span class="option-price" style="margin-top:3px; font-size:10px; color:#c8c0b4;">24개월 이하 영아 무료 · 임산부 동반 시 추가인원 무료</span>
+        <span class="option-price">2만원 · 인 · 박 <span id="guestMaxText"></span></span>
+        <span class="option-note">24개월 이하 영아 무료 · 임산부 동반 시 추가인원 무료</span>
+        <span class="option-note all-only" style="display:none; color:#9c7e68;">최대 14인 · 14인 초과 인원은 카카오로 문의해 주세요</span>
       </div>
       <div class="stepper">
         <button onclick="changeGuest(-1)" id="guestMinus">−</button>
         <span class="count" id="guestCount">0</span>
-        <button onclick="changeGuest(1)">+</button>
+        <button onclick="changeGuest(1)" id="guestPlus">+</button>
       </div>
     </div>
     <div class="option-row">
       <div class="option-left">
         <span class="option-name">바베큐</span>
-        <span class="option-price" id="bbqPrice">3만원</span>
-        <span class="option-price" id="bbqNote" style="display:none; font-size:10px; color:#c8c0b4;">두 동 각 3만원 · 총 6만원</span>
+        <span class="option-price">3만원</span>
+        <span class="option-note all-only" style="display:none">한 동에서 진행돼요 · 두 동 모두 원하시면 카카오로 문의 남겨주세요</span>
+        <div class="unit-pick" id="bbqPick">
+          <span class="pick-label">진행 동</span>
+          <button data-v="여백채" onclick="pickUnit('bbq','여백채')">여백채</button>
+          <button data-v="온기채" onclick="pickUnit('bbq','온기채')">온기채</button>
+        </div>
       </div>
       <label class="toggle">
         <input type="checkbox" id="bbqToggle" onchange="updateSummary()">
@@ -204,8 +196,13 @@
     <div class="option-row">
       <div class="option-left">
         <span class="option-name">온수풀</span>
-        <span class="option-price" id="poolPrice">6만원</span>
-        <span class="option-price" id="poolNote" style="display:none; font-size:10px; color:#c8c0b4;">두 동 각 6만원 · 합계 12만원</span>
+        <span class="option-price">6만원</span>
+        <span class="option-note all-only" style="display:none">한 동에서 진행돼요 · 두 동 모두 원하시면 카카오로 문의 남겨주세요</span>
+        <div class="unit-pick" id="poolPick">
+          <span class="pick-label">진행 동</span>
+          <button data-v="여백채" onclick="pickUnit('pool','여백채')">여백채</button>
+          <button data-v="온기채" onclick="pickUnit('pool','온기채')">온기채</button>
+        </div>
       </div>
       <label class="toggle">
         <input type="checkbox" id="poolToggle" onchange="updateSummary()">
@@ -226,7 +223,7 @@
   <a class="cta disabled" id="ctaBtn" href="#" target="_blank" rel="noopener noreferrer">카카오로 연락하기</a>
   <button class="reset-btn" id="resetBtn" onclick="resetSelection()">선택 초기화</button>
 
-  <div class="notice">
+  <div class="notice" id="bottomNotice">
     · 24개월 이하 영아는 추가요금 없이 인원에 포함됩니다.<br>단, 침구류 등 별도 용품은 제공되지 않아요.<br><br>
     · 임산부 동반 시 추가인원 무료 (예약 시 산모수첩 증빙 필요)
   </div>
@@ -244,6 +241,13 @@
   const KAKAO = 'http://pf.kakao.com/_XBnwX';
   const WORKER_URL = 'https://haruchi-notion.sun-haruuu.workers.dev';
 
+  // 할인 설정
+  const FULL_DISCOUNT = 0.10;   // 전체 대관 할인 (객실 요금에만)
+  const STAY_DISCOUNT = 0.10;   // 연박(2박 이상) 할인 (객실 요금에만)
+  // 'multiply' : 전체대관 할인 후 금액에서 다시 10% (총 19% 할인)
+  // 'add'      : 두 할인을 원가 기준으로 더함 (총 20% 할인)
+  const DISCOUNT_STACK = 'multiply';
+
   const HOLIDAYS = [
     '2025-09-05','2025-09-06','2025-09-07','2025-09-08',
     '2026-01-27','2026-01-28','2026-01-29','2026-01-30',
@@ -257,13 +261,15 @@
     all:  { base: 10, max: 14 }
   };
   const UNIT_NOTION = unit === 'goyo' ? '여백채' : unit === 'ongi' ? '온기채' : '전체';
+  const IS_ALL = unit === 'all';
 
   // 기본값 (Notion에 없는 날짜는 가격 미표시)
   let PRICES = { weekday:0, fri:0, sat:0, sun:0, holiday:0 };
   let OPTIONS = { bbq:30000, pool:60000, guest:20000 };
   let UNAVAILABLE = [];
-  let DATE_PRICES = {};
+  let DATE_PRICES = {};   // 할인 전 원가 (전체 대관은 두 동 합산)
   let DATE_COLORS = {};
+  let optUnit = { bbq: null, pool: null };  // 전체 대관 시 옵션 진행 동
 
   // ── Notion API 호출 (Cloudflare Worker 경유) ──────────────────────────
 
@@ -271,111 +277,113 @@
     const p = new URLSearchParams({ db: dbId });
     if (filter) p.set('filter', JSON.stringify({ filter }));
     const res = await fetch(`${WORKER_URL}?${p.toString()}`);
-    return res.json();
+    const data = await res.json();
+    if (data && data.has_more) console.warn('Notion 결과가 100건을 넘어 일부 날짜가 누락됐을 수 있어요:', dbId, filter);
+    return data;
   }
 
-  async function loadNotionData() {
+  const byUnit = (name) => ({ property: '객실', select: { equals: name } });
+
+  // 요금 행 → { prices: {날짜: 가격}, colors: {날짜: 색상} }
+  function parsePrices(data) {
+    const prices = {}, colors = {};
+    (data.results || []).forEach(row => {
+      const date = row.properties['날짜']?.title?.[0]?.plain_text;
+      const price = row.properties['가격']?.number;
+      const color = row.properties['색상']?.select?.name;
+      if (date && price) prices[date] = price;
+      if (date && color) colors[date] = color;
+    });
+    return { prices, colors };
+  }
+
+  // '마감'과 '홀드'는 예약 불가로 표시
+  const BLOCKED_STATES = ['마감', '홀드'];
+  function parseUnavail(data) {
+    return (data.results || [])
+      .filter(r => BLOCKED_STATES.includes(r.properties['상태']?.select?.name))
+      .map(r => r.properties['날짜']?.title?.[0]?.plain_text)
+      .filter(Boolean);
+  }
+
+  // ── 월 단위로 불러오기 (노션 100건 제한을 피하기 위해 한 달씩 조회) ──
+  const loadedMonths = new Set();
+  const ymKey = (y, m) => `${y}-${String(m + 1).padStart(2, '0')}`;
+  const inMonth = (key, unitName) => ({ and: [
+    byUnit(unitName),
+    { property: '날짜', title: { starts_with: key } }
+  ]});
+
+  async function loadMonth(y, m) {
+    const key = ymKey(y, m);
+    if (loadedMonths.has(key)) return;
+    loadedMonths.add(key);
     try {
-      if (unit === 'all') {
-        // 전체 대관: 여백채 + 온기채 요금 합산
-        const [priceGoyo, priceOngi] = await Promise.all([
-          notionQuery(DB_PRICES, { or: [
-            { property: '객실', select: { equals: '여백채' } },
-            { property: '객실', select: { equals: '전체' } }
-          ]}),
-          notionQuery(DB_PRICES, { property: '객실', select: { equals: '온기채' } })
-        ]);
-        const mergePrices = (data) => {
-          if (!data.results) return;
-          data.results.forEach(row => {
-            const date = row.properties['날짜']?.title?.[0]?.plain_text;
-            const price = row.properties['가격']?.number;
-            const color = row.properties['색상']?.select?.name;
-            if (date && price) DATE_PRICES[date] = (DATE_PRICES[date] || 0) + price;
-            if (date && color && !DATE_COLORS[date]) DATE_COLORS[date] = color;
-          });
-        };
-        mergePrices(priceGoyo);
-        mergePrices(priceOngi);
+      const names = IS_ALL ? ['여백채', '온기채', '전체'] : [UNIT_NOTION, '전체'];
+      const [priceRes, unavailRes] = await Promise.all([
+        Promise.all(names.map(n => notionQuery(DB_PRICES, inMonth(key, n)))),
+        Promise.all(names.map(n => notionQuery(DB_UNAVAIL, inMonth(key, n))))
+      ]);
+      const P = {};
+      names.forEach((n, i) => { P[n] = parsePrices(priceRes[i]); });
+      const A = P['전체'];
 
-        // 전체 대관: 어느 한 동이라도 마감이면 마감
-        const [unavailGoyo, unavailOngi] = await Promise.all([
-          notionQuery(DB_UNAVAIL, { or: [
-            { property: '객실', select: { equals: '여백채' } },
-            { property: '객실', select: { equals: '전체' } }
-          ]}),
-          notionQuery(DB_UNAVAIL, { property: '객실', select: { equals: '온기채' } })
-        ]);
-        const collectUnavail = (data) => {
-          if (!data.results) return [];
-          return data.results
-            .filter(r => r.properties['상태']?.select?.name === '마감')
-            .map(r => r.properties['날짜']?.title?.[0]?.plain_text)
-            .filter(Boolean);
-        };
-        const u1 = collectUnavail(unavailGoyo);
-        const u2 = collectUnavail(unavailOngi);
-        UNAVAILABLE = [...new Set([...u1, ...u2])];
-
+      if (IS_ALL) {
+        // 각 동 요금(없으면 '전체' 공통 요금)을 날짜별로 합산
+        const G = P['여백채'], O = P['온기채'];
+        const dates = new Set([...Object.keys(G.prices), ...Object.keys(O.prices), ...Object.keys(A.prices)]);
+        dates.forEach(d => {
+          const g = G.prices[d] ?? A.prices[d];
+          const o = O.prices[d] ?? A.prices[d];
+          if (g && o) DATE_PRICES[d] = g + o;   // 두 동 요금이 모두 있어야 표시
+        });
+        const colorDates = new Set([...Object.keys(G.colors), ...Object.keys(O.colors), ...Object.keys(A.colors)]);
+        colorDates.forEach(d => { DATE_COLORS[d] = G.colors[d] || A.colors[d] || O.colors[d]; });
       } else {
-        // 1. 요금 설정 (날짜별)
-        const priceData = await notionQuery(DB_PRICES, {
-          or: [
-            { property: '객실', select: { equals: UNIT_NOTION } },
-            { property: '객실', select: { equals: '전체' } }
-          ]
-        });
-        if (priceData.results) {
-          priceData.results.forEach(row => {
-            const date = row.properties['날짜']?.title?.[0]?.plain_text;
-            const price = row.properties['가격']?.number;
-            const color = row.properties['색상']?.select?.name;
-            if (date && price) DATE_PRICES[date] = price;
-            if (date && color) DATE_COLORS[date] = color;
-          });
-        }
-
-        // 2. 예약 불가 날짜
-        const unavailData = await notionQuery(DB_UNAVAIL, {
-          or: [
-            { property: '객실', select: { equals: UNIT_NOTION } },
-            { property: '객실', select: { equals: '전체' } }
-          ]
-        });
-        if (unavailData.results) {
-          UNAVAILABLE = unavailData.results
-            .filter(r => r.properties['상태']?.select?.name === '마감')
-            .map(r => r.properties['날짜']?.title?.[0]?.plain_text)
-            .filter(Boolean);
-        }
+        // 해당 동 요금 우선, 없으면 '전체' 공통 요금
+        Object.assign(DATE_PRICES, A.prices, P[UNIT_NOTION].prices);
+        Object.assign(DATE_COLORS, A.colors, P[UNIT_NOTION].colors);
       }
 
-      // 3. 공지사항
+      // 예약 불가: 조회한 동 중 하나라도 마감/홀드면 불가
+      const blocked = new Set(UNAVAILABLE);
+      unavailRes.forEach(r => parseUnavail(r).forEach(d => blocked.add(d)));
+      UNAVAILABLE = [...blocked];
+    } catch (e) {
+      loadedMonths.delete(key);   // 실패하면 다음에 다시 시도
+      console.log('Notion 연동 오류:', key, e);
+    }
+  }
+
+  // 보고 있는 달 + 다음 달을 불러온 뒤 다시 그리기
+  async function ensureMonths() {
+    const ny = curM === 11 ? curY + 1 : curY, nm = (curM + 1) % 12;
+    await Promise.all([loadMonth(curY, curM), loadMonth(ny, nm)]);
+    render(); updateSummary();
+  }
+
+  async function loadNotice() {
+    try {
       const noticeData = await notionQuery(DB_NOTICE, {
         property: '표시', select: { equals: '켜짐' }
       });
       if (noticeData.results && noticeData.results.length > 0) {
-        const notice = noticeData.results[0];
-        const content = notice.properties['내용']?.rich_text?.[0]?.plain_text;
+        const content = noticeData.results[0].properties['내용']?.rich_text?.[0]?.plain_text;
         if (content) {
           const noticeEl = document.getElementById('noticeBar');
           if (noticeEl) { noticeEl.textContent = content; noticeEl.style.display = 'block'; }
         }
       }
-
-      render();
-    } catch(e) {
-      console.log('Notion 연동 오류, 기본값 사용:', e);
-      render();
-    }
+    } catch (e) { console.log('공지 불러오기 오류:', e); }
   }
 
   // ──────────────────────────────────────────
 
   document.getElementById('unitName').textContent = UNIT_NAMES[unit] || '여백채';
   const cap = UNIT_CAPACITY[unit] || UNIT_CAPACITY.goyo;
+  const MAX_EXTRA = cap.max - cap.base;
   const capEl = document.getElementById('unitCapacity');
-  if (unit === 'all') {
+  if (IS_ALL) {
     capEl.innerHTML = `여백채 + 온기채 · 기준 <span>${cap.base}인</span> · 최대 <span>${cap.max}인</span>`;
   } else {
     capEl.innerHTML = `기준 <span>${cap.base}인</span> · 최대 <span>${cap.max}인</span>`;
@@ -393,8 +401,14 @@
     if (w===5) return 'fri'; if (w===6) return 'sat'; if (w===0) return 'sun';
     return 'weekday';
   }
-  function fmt(n) { return (n/10000).toFixed(0)+'만'; }
+  // 달력용 만원 단위 (소수점 필요하면 한 자리까지)
+  function fmt(n) {
+    const v = n / 10000;
+    return (Number.isInteger(v) ? v : Math.round(v * 10) / 10) + '만';
+  }
+  function won(n) { return n.toLocaleString('ko-KR') + '원'; }
   function fmtDate(d) { return `${d.getMonth()+1}월 ${d.getDate()}일`; }
+
   function calcNights(ci, co) {
     let total=0, nights=0;
     const cur = new Date(ci);
@@ -408,17 +422,44 @@
     return { total, nights };
   }
 
+  // 객실 요금 할인 계산 (옵션 제외)
+  function calcRoom(total, nights) {
+    const fullDisc = IS_ALL ? Math.round(total * FULL_DISCOUNT) : 0;
+    let stayDisc = 0;
+    if (nights >= 2) {
+      const base = DISCOUNT_STACK === 'add' ? total : (total - fullDisc);
+      stayDisc = Math.round(base * STAY_DISCOUNT);
+    }
+    return { fullDisc, stayDisc, room: total - fullDisc - stayDisc };
+  }
+
   function changeGuest(dir) {
-    extraGuest = Math.max(0, extraGuest + dir);
+    extraGuest = Math.min(MAX_EXTRA, Math.max(0, extraGuest + dir));
     document.getElementById('guestCount').textContent = extraGuest;
     document.getElementById('guestMinus').disabled = extraGuest === 0;
+    document.getElementById('guestPlus').disabled = extraGuest >= MAX_EXTRA;
     updateSummary();
+  }
+
+  function pickUnit(opt, v) {
+    optUnit[opt] = v;
+    updateSummary();
+  }
+
+  function renderPicks() {
+    ['bbq', 'pool'].forEach(o => {
+      const on = IS_ALL && document.getElementById(o + 'Toggle').checked;
+      const el = document.getElementById(o + 'Pick');
+      el.classList.toggle('visible', on);
+      el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === optUnit[o]));
+    });
   }
 
   function changeMonth(dir) {
     curM += dir;
     if (curM>11){curM=0;curY++;} if (curM<0){curM=11;curY--;}
     render();
+    ensureMonths();
   }
 
   function selectDay(ymd) {
@@ -439,7 +480,6 @@
         cur.setDate(cur.getDate()+1);
       }
       if (blocked) {
-        // 중간에 마감일이 있으면 → 새 체크인으로 설정 (단, 마감일이면 무시)
         if (!isUnavail) { checkin = ymd; checkout = null; }
       } else {
         checkout = ymd;
@@ -451,19 +491,16 @@
     // 마감일은 체크인으로 선택 불가
     if (isUnavail) return;
 
-    if (!checkin || (checkin && checkout)) {
-      checkin = ymd; checkout = null;
-    } else {
-      // ymd <= checkin 인 경우 새 체크인
-      checkin = ymd; checkout = null;
-    }
+    checkin = ymd; checkout = null;
     render(); updateSummary();
   }
 
   function resetSelection() {
     checkin=null; checkout=null; extraGuest=0;
+    optUnit = { bbq: null, pool: null };
     document.getElementById('guestCount').textContent = '0';
     document.getElementById('guestMinus').disabled = true;
+    document.getElementById('guestPlus').disabled = MAX_EXTRA === 0;
     document.getElementById('bbqToggle').checked = false;
     document.getElementById('poolToggle').checked = false;
     render(); updateSummary();
@@ -480,17 +517,21 @@
   }
 
   function buildMsg(ci, co, nights, grandTotal, bbq, pool) {
-    const unitLabel = unit === 'all' ? '전체 대관 (여백채 + 온기채)' : UNIT_NAMES[unit];
+    const unitLabel = IS_ALL ? '전체 대관 (여백채 + 온기채)' : UNIT_NAMES[unit];
+    const where = (o) => IS_ALL ? ` · ${optUnit[o] ? optUnit[o] + '에서 진행' : '진행 동 미정'}` : '';
     let msg = `하루치 ${unitLabel} 예약 문의\n`;
     msg += `──────────────\n`;
     msg += `체크인  ${fmtDate(ci)}\n`;
     msg += `체크아웃  ${fmtDate(co)} (${nights}박)\n`;
     if (extraGuest > 0) msg += `추가 인원  ${extraGuest}명\n`;
-    if (bbq) msg += `바베큐  신청\n`;
-    if (pool) msg += `온수풀  신청\n`;
+    if (bbq) msg += `바베큐  신청${where('bbq')}\n`;
+    if (pool) msg += `온수풀  신청${where('pool')}\n`;
     msg += `──────────────\n`;
-    msg += `예상 금액  ${(grandTotal/10000).toFixed(0)}만원`;
-    if (nights >= 2) msg += ` (연박 할인 적용)`;
+    msg += `예상 금액  ${won(grandTotal)}`;
+    const discs = [];
+    if (IS_ALL) discs.push('전체 대관 할인');
+    if (nights >= 2) discs.push('연박 할인');
+    if (discs.length) msg += `\n(${discs.join(' · ')} 적용)`;
     return msg;
   }
 
@@ -502,6 +543,7 @@
     const rst = document.getElementById('resetBtn');
     const bbq = document.getElementById('bbqToggle').checked;
     const pool = document.getElementById('poolToggle').checked;
+    renderPicks();
 
     if (!checkin) {
       dateCardBody.innerHTML = '<div class="hint">체크인 날짜를 선택해 주세요</div>';
@@ -530,13 +572,22 @@
 
     const co = fromYMD(checkout);
     const { total, nights } = calcNights(ci, co);
-    const disc = nights >= 2 ? 0.9 : 1;
-    const roomCost = Math.round(total * disc);
+    const { fullDisc, stayDisc, room } = calcRoom(total, nights);
     const guestCost = extraGuest * OPTIONS.guest * nights;
-    const unitCount = unit === 'all' ? 2 : 1; // 전체 대관은 바베큐·온수풀 2배
-    const bbqCost = bbq ? OPTIONS.bbq * unitCount : 0;
-    const poolCost = pool ? OPTIONS.pool * unitCount : 0;
-    const grandTotal = roomCost + guestCost + bbqCost + poolCost;
+    const bbqCost = bbq ? OPTIONS.bbq : 0;     // 전체 대관도 한 동 기준
+    const poolCost = pool ? OPTIONS.pool : 0;
+    const grandTotal = room + guestCost + bbqCost + poolCost;
+
+    let rows = `<div class="row"><span>객실 요금 (${nights}박)</span><span>${won(total)}</span></div>`;
+    if (fullDisc) rows += `<div class="row minus"><span>전체 대관 할인 10%</span><span>−${won(fullDisc)}</span></div>`;
+    if (stayDisc) rows += `<div class="row minus"><span>연박 할인 10%</span><span>−${won(stayDisc)}</span></div>`;
+    if (guestCost) rows += `<div class="row"><span>추가 인원 ${extraGuest}명</span><span>+${won(guestCost)}</span></div>`;
+    if (bbqCost) rows += `<div class="row"><span>바베큐</span><span>+${won(bbqCost)}</span></div>`;
+    if (poolCost) rows += `<div class="row"><span>온수풀</span><span>+${won(poolCost)}</span></div>`;
+
+    const discNotes = [];
+    if (IS_ALL) discNotes.push('전체 대관 10%');
+    if (nights >= 2) discNotes.push('연박 10%');
 
     dateCardBody.innerHTML = `
       <div class="dates-row">
@@ -547,15 +598,16 @@
       <div class="nights-row">
         <span>${nights}박</span>
         <div>
-          <div class="total-price">${(grandTotal/10000).toFixed(0)}만원</div>
-          ${nights>=2 ? '<div class="discount-note">연박 10% 할인 적용</div>' : ''}
+          <div class="total-price">${won(grandTotal)}</div>
+          ${discNotes.length ? `<div class="discount-note">${discNotes.join(' · ')} 할인 적용</div>` : ''}
         </div>
-      </div>`;
+      </div>
+      <div class="breakdown">${rows}</div>
+      ${nights >= 2 ? '<div class="stay-note">연박 중 중간 청소는 제공되지 않아요. 추가 수건 등 필요한 물품은 카카오로 미리 말씀해 주세요.</div>' : ''}`;
 
     optionCard.style.display = 'block';
 
-    const msg = buildMsg(ci, co, nights, grandTotal, bbq, pool);
-    document.getElementById('msgText').textContent = msg;
+    document.getElementById('msgText').textContent = buildMsg(ci, co, nights, grandTotal, bbq, pool);
     msgBox.classList.add('visible');
 
     cta.className = 'cta';
@@ -569,24 +621,25 @@
     grid.innerHTML = '';
     const first = new Date(curY,curM,1).getDay();
     const last = new Date(curY,curM+1,0).getDate();
+    const colorMap = {
+      '기본(검정)': 'weekday',
+      '주말(빨강)': 'red',
+      '공휴일(주황)': 'holiday',
+      '성수기(파랑)': 'blue',
+      '특가(초록)': 'green'
+    };
     for (let i=0;i<first;i++) { const e=document.createElement('div'); e.className='day empty'; grid.appendChild(e); }
     for (let d=1;d<=last;d++) {
       const date=new Date(curY,curM,d), ymd=toYMD(date), type=getDayType(date);
       const isUnavail=UNAVAILABLE.includes(ymd), isPast=date<today;
 
-      // 날짜별 색상 override
-      const colorMap = {
-        '기본(검정)': 'weekday',
-        '주말(빨강)': 'red',
-        '공휴일(주황)': 'holiday',
-        '성수기(파랑)': 'blue',
-        '특가(초록)': 'green'
-      };
       const overrideColor = DATE_COLORS[ymd];
       const displayType = overrideColor ? (colorMap[overrideColor] || type) : type;
 
-      // 날짜별 가격 override
-      const displayPrice = DATE_PRICES[ymd] !== undefined ? DATE_PRICES[ymd] : PRICES[type];
+      // 달력 표시 요금: 전체 대관은 10% 할인가로 표시
+      const rawPrice = DATE_PRICES[ymd] !== undefined ? DATE_PRICES[ymd] : PRICES[type];
+      const displayPrice = IS_ALL ? Math.round(rawPrice * (1 - FULL_DISCOUNT)) : rawPrice;
+
       const isCI=ymd===checkin, isCO=ymd===checkout;
       const isRange=checkin&&checkout&&ymd>checkin&&ymd<checkout;
       const cell=document.createElement('div');
@@ -600,7 +653,6 @@
         const priceText = displayPrice > 0 ? fmt(displayPrice) : '';
         cell.innerHTML=`<span class="dn">${d}</span><span class="dp">${isPast?'':priceText}</span>`;
       }
-      // 마감일도 체크아웃 후보가 될 수 있으니 클릭은 항상 허용 (selectDay 내부에서 판단)
       if(!isPast) cell.onclick=()=>selectDay(ymd);
       grid.appendChild(cell);
     }
@@ -608,14 +660,17 @@
 
   function init() {
     curY=today.getFullYear(); curM=today.getMonth();
-    document.getElementById('guestMinus').disabled=true;
-    // 전체 대관일 때 옵션 안내 표시
-    if (unit === 'all') {
-      document.getElementById('bbqNote').style.display = 'block';
-      document.getElementById('poolNote').style.display = 'block';
+    document.getElementById('guestMinus').disabled = true;
+    document.getElementById('guestPlus').disabled = MAX_EXTRA === 0;
+    document.getElementById('guestMaxText').textContent = `· 최대 ${MAX_EXTRA}명`;
+    if (IS_ALL) {
+      document.querySelectorAll('.all-only').forEach(el => el.style.display = 'block');
+      document.getElementById('unitBadge').style.display = 'inline-block';
+      document.getElementById('bottomNotice').innerHTML += '<br><br>· 전체 대관은 객실 요금 10% 할인, 연박 시 연박 할인이 추가로 적용돼요.<br>바베큐·온수풀은 한 동 기준이며, 두 동 모두 원하시면 문의 주세요.<br><br>· 전체 대관은 최대 14인까지 예약 가능하며, 14인 초과 시 카카오로 문의해 주세요.';
     }
     render(); updateSummary();
-    loadNotionData(); // Notion에서 데이터 로드
+    ensureMonths();
+    loadNotice();
   }
   init();
 </script>
